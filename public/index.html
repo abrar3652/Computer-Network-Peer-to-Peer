@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2P Communication App</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+    <!-- User Name Entry Form -->
+     <div id="usernameForm" class="container">
+        <h1>Welcome to P2P Communication</h1>
+        <p>Please enter your name to start chatting:</p>
+        <input type="text" id="usernameInput" placeholder="Enter your name" required>
+        <button id="startChatButton">Start Chat</button>
+    </div>
+    
+    <div id="chatInterface" class="container">
+        <h1>P2P Communication</h1>
+        <!-- <div id="usernameDisplay"></div> <!--Optional: Display user's name --> 
+        <div class="messages" id="messages">
+            <!-- Messages will be displayed here -->
+        </div>
+        
+        <div class="send-container">
+            <input type="text" id="messageInput" placeholder="Type your message here...">
+            <button id="mediaButton">📁</button> <!-- Media Button (like emoji button) -->
+            <input class="Media-Files" type="file" id="fileInput">
+            <button id="emojiButton">😊</button> <!-- Emoji Button -->
+        </div>
+
+        <div>
+            <button id="sendButton" disabled>Send</button>
+        </div>
+    </div>
+
+    <!-- Emoji Picker -->
+    <div id="emojiPicker">
+        <span class="emoji" onclick="insertEmoji('😊')">😊</span>
+        <span class="emoji" onclick="insertEmoji('😂')">😂</span>
+        <span class="emoji" onclick="insertEmoji('😎')">😎</span>
+        <span class="emoji" onclick="insertEmoji('😍')">😍</span>
+        <span class="emoji" onclick="insertEmoji('😢')">😢</span>
+        <span class="emoji" onclick="insertEmoji('😡')">😡</span>
+        <!-- Add more emojis here -->
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>

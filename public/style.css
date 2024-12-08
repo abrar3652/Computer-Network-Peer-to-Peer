@@ -1,0 +1,148 @@
+
+/* General Styles*/
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f4f4f9;
+    /* background-image: url(../pic/Back-ground.jpg); 
+    background-size: cover;  /
+    background-position: center;  
+    background-repeat: no-repeat;  */
+}
+
+/* Container for the app */
+.container {
+    width: 600px;
+    max-width: 100%;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Header Styles */
+h1 {
+    font-size: 24px;
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Message Display Area */
+.messages {
+    max-height: 500px;
+    height: 500px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+/* Each individual message */
+.message {
+    margin-bottom: 10px;
+    padding: 5px;
+    border-radius: 4px;
+    background-color: #e0e0e0;
+    word-wrap: break-word;
+    border-radius: 5px;
+}
+
+/* Input and File Upload Fields */
+.send-container {
+    display: flex;
+    /* border: 10px solid black; */
+    gap: 10px;
+    justify-content: space-between;
+}
+
+input[type="text"], input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+/* File Picker (Hidden file input) */
+#fileInput {
+    display: none;  /* Hide the file input element */
+}
+
+/* Send Button Styles */
+button {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+/* Hover effects for buttons */
+button:hover:enabled {
+    background-color: #0056b3;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 600px) {
+    .container {
+        width: 90%;
+        padding: 15px;
+    }
+    h1 {
+        font-size: 20px;
+    }
+    button {
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+} 
+
+/* Emoji Button */
+#emojiButton {
+    padding: 10px;
+    background-color: #f1c40f;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#emojiButton:hover:enabled {
+    background-color: #c09900;
+}
+/* Emoji Picker */
+#emojiPicker {
+    display: none;
+    position: absolute;
+    bottom: 100px;
+    left: 20px;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    border-radius: 8px;
+    max-width: 250px;
+    z-index: 10;
+    border: 1px solid #ccc;
+}
+.emoji {
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px;
+}
+.emoji:hover {
+    background-color: #f0f0f0;
+}
