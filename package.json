@@ -1,11 +1,11 @@
 {
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
   "name": "p2p_communication-app",
   "version": "1.0.0",
   "main": "server.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npm start"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
