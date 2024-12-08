@@ -34,8 +34,11 @@ h1 {
 
 /* Message Display Area */
 .messages {
+    display: flex;
+    flex-direction: column-reverse;
+    overflow-y: auto;
     max-height: 500px;
-    height: 500px;
+    height: 400px;
     overflow-y: auto;
     margin-bottom: 10px;
     border: 1px solid #ccc;

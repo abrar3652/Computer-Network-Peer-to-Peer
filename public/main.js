@@ -28,26 +28,43 @@ messageInput.addEventListener('keydown', handleKeyPress);
 emojiButton.addEventListener('click', toggleEmojiPicker);
 mediaButton.addEventListener('click', openFilePicker);  // Handle file picker click
 
-// Check if the user has already entered their name
-// usernameForm.style.display = 'block';
-// chatInterface.style.display = 'none';
-// const username = localStorage.getItem('username');
-// if (username) {
-//     switchToChat(username);
-// }
-//  else {
-//     usernameForm.style.display = 'block';
-//     chatInterface.style.display = 'none';
-// }
+// Add event listener for pressing Enter key
+usernameInput.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        // Prevent default behavior (e.g., form submission if inside a form)
+        event.preventDefault();
+        
+        const username = document.getElementById('usernameInput').value.trim();
+        if (username) {
+            // Update the chat title with the username
+            document.querySelector('#chatInterface h1').textContent = username;
+        } else {
+            alert('Please enter a valid name.');
+        }
+        // Trigger the start chat function
+      startChat();
+    }
+  });
+
+// When the "Start Chat" button is clicked, Put Peer name on chat header
+document.getElementById('startChatButton').addEventListener('click', function() {
+    const username = document.getElementById('usernameInput').value.trim();
+
+    if (username) {
+        // Update the chat title with the username
+        document.querySelector('#chatInterface h1').textContent = username;
+    } else {
+        alert('Please enter a valid name.');
+    }
+});
 
 // Start the chat after user enters their name
 chatInterface.style.display = 'none';
 function startChat() {
-    // usernameForm.style.display = 'none';
 
     const enteredUsername = usernameInput.value.trim();
     if (enteredUsername) {
-        localStorage.setItem('username', enteredUsername);
+        sessionStorage.setItem('username', enteredUsername);  
         switchToChat(enteredUsername);
     } else {
         alert('Please enter a valid name.');
@@ -78,7 +95,7 @@ function handleKeyPress(event) {
 // Function to send a text message
 function sendMessage() {
     const message = messageInput.value.trim();
-    const username = localStorage.getItem('username');
+    const username = sessionStorage.getItem('username');
 
     if (message && username) {
         // Send message via WebSocket
@@ -114,14 +131,38 @@ function openFilePicker() {
 function displayMessage(message, fileElement = null) {
     const messageElement = document.createElement('div');
     messageElement.classList.add('message');
-    messageElement.textContent = message;  // Text message
+    
+    // Check if the message is sent or received
+    const username = sessionStorage.getItem('username');
+    const isSender = message.includes(username); // Check if the message is from the current user
 
-    // If there's a file (image or document), add it as well
-    if (fileElement) {
-        messageElement.appendChild(fileElement);
+    // If the message is from the sender (yourself)
+    if (isSender) {
+        messageElement.classList.add('sent');
+    } else {
+        messageElement.classList.add('received');
     }
 
-    messagesContainer.appendChild(messageElement);
+    // Text message
+    if (message) {
+        const textElement = document.createElement('div');
+        textElement.classList.add('text-message');
+        textElement.textContent = message;
+        messageElement.appendChild(textElement);
+    }
+
+    // If there's an image, display it as part of the message
+    if (fileElement) {
+        const imageContainer = document.createElement('div');
+        imageContainer.classList.add('image-container');
+        imageContainer.appendChild(fileElement);
+        messageElement.appendChild(imageContainer);
+    }
+
+        // Append the new message
+    messagesContainer.prepend(messageElement);
+
+        // Scroll to the bottom to show the latest message
     messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to the bottom
 }
 
@@ -135,7 +176,9 @@ function sendFile() {
 
             // Check if the file is an image or a document
             const isImage = file.type.startsWith('image/');
-            const isDocument = !isImage && (file.type === 'application/pdf' || file.type === 'application/msword' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.type === 'application/vnd.ms-powerpoint' || file.type === 'application/xml');
+
+            // const isDocument = !isImage && (file.type === 'application/pdf' || file.type === 'application/msword' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.type === 'application/vnd.ms-powerpoint' || file.type === 'application/xml');
+            const isDocument = file.type !== 'image/' && file.type !== '';
 
             // Handle image files
             if (isImage) {
@@ -144,16 +187,17 @@ function sendFile() {
                 imageElement.alt = file.name;
                 imageElement.style.maxWidth = '200px'; // Limit image size
                 imageElement.style.maxHeight = '200px';
-                displayMessage('You shared an image: ' + file.name, imageElement);
+                displayMessage('You shared an image: ' ,imageElement);
+                // displayMessage('' , imageElement);
             }
 
             // Handle document files (e.g., PDF, DOCX, PPTX)
-            if (isDocument) {
+            else if (isDocument) {
                 const docLink = document.createElement('a');
                 docLink.href = fileContent;
                 docLink.target = '_blank'; // Open in a new tab
-                docLink.textContent = 'You shared a document: ' + file.name;
-                displayMessage('You shared a document: ' + file.name, docLink);
+                docLink.textContent =  file.name;
+                displayMessage('You shared a document: ' , docLink);
             }
 
             // Send the file as base64 string to the server
@@ -161,7 +205,8 @@ function sendFile() {
                 type: 'file',
                 fileName: file.name,
                 fileContent: fileContent,
-                fileType: file.type  // Send the file type (image, document, etc.)
+                fileType: file.type,  // Send the file type (image, document, etc.)
+                username: sessionStorage.getItem('username')
             }));
         };
         reader.readAsDataURL(file); // Read the file as base64 (data URL)
@@ -177,20 +222,17 @@ socket.onopen = function() {
 socket.onmessage = function(event) {
     try {
         const data = JSON.parse(event.data); // Parse the message as JSON
-        // const username = data.username || "Peer";  // Fallback to "Peer" if username is not present
 
+        // for text handling
         if (data.type === 'message'&& data.content && data.username) {
-            if (typeof data.content === 'string') {
                 displayMessage(data.username + ': ' + data.content); // Display the text message content correctly
-                // displayMessage(`${data.username}: ${data.content}`); // Display the message with username
-            } else {
-                console.error('Invalid message content:', data.content);
-            }
-        } else if (data.type === 'file') {
+        } else if (data.type === 'file'&& data.fileContent) {
+
             // Handle file messages (images and documents)
             if (data.fileContent) {
                 const isImage = data.fileType.startsWith('image/');
-                const isDocument = !isImage && (data.fileType === 'application/pdf' || data.fileType === 'application/msword' || data.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || data.fileType === 'application/vnd.ms-powerpoint' || data.fileType === 'application/xml');
+                // const isDocument = !isImage && (data.fileType === 'application/pdf' || data.fileType === 'application/msword' || data.fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || data.fileType === 'application/vnd.ms-powerpoint' || data.fileType === 'application/xml');
+                const isDocument = !isImage;
                 
                 if (isImage) {
                     const imageElement = document.createElement('img');
@@ -198,19 +240,33 @@ socket.onmessage = function(event) {
                     imageElement.alt = data.fileName;
                     imageElement.style.maxWidth = '200px'; // Limit image size
                     imageElement.style.maxHeight = '200px';
-                    displayMessage(data.username + ' shared an image: ' + ': ' + data.fileName, imageElement);
-                    // displayMessage('Peer shared an image: ' + ': ' + data.fileName, imageElement);
-                    // displayMessage(`${data.username} shared an image: ${data.fileName}`, imageElement);
+                    displayMessage(data.username + ' shared an image: ' , imageElement);
                 }
 
                 if (isDocument) {
+
+                    // Create a document link
                     const docLink = document.createElement('a');
                     docLink.href = data.fileContent;
-                    docLink.target = '_blank'; // Open in a new tab
-                    docLink.textContent = 'Peer shared a document: ' + data.fileName;
-                    displayMessage(data.username + ' Peer shared a document: ' + data.fileName, docLink);
-                    // displayMessage(' Peer shared a document: ' + data.fileName, docLink);
-                    // displayMessage(`${data.username} shared a document: ${data.fileName}`, docLink);
+                    
+                    // docLink.textContent = data.username +' shared a document: ' + data.fileName;
+                    docLink.textContent =  data.fileName;
+
+                    // Add event listener to handle both open and download
+                    docLink.addEventListener('click', function(event) {
+                        event.preventDefault();
+                        
+                        // Open the document in a new tab
+                        window.open(data.fileContent, '_blank');
+
+                        // Trigger the download
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = data.fileContent;
+                        downloadLink.download = data.fileName;
+                        downloadLink.click();
+                    });
+                    
+                    displayMessage(data.username + ' shared a document: ' , docLink);
                 }
             }
         }
