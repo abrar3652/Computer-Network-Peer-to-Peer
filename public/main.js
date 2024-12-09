@@ -18,6 +18,15 @@ const emojiButton = document.getElementById('emojiButton');
 const emojiPicker = document.getElementById('emojiPicker');
 const mediaButton = document.getElementById('mediaButton');
 
+const goToPage3Button = document.getElementById('goToPage3');
+const goToPage4Button = document.getElementById('goToPage4');
+
+const page3 = document.getElementById('page3');
+const backToChatPageButton = document.getElementById('backToChatPage');
+
+const page4 = document.getElementById('page4');
+const backToChatPage2Button = document.getElementById('backToChatPage2');
+
 
 // Event listeners
 startChatButton.addEventListener('click', startChat);
@@ -27,6 +36,19 @@ fileInput.addEventListener('change', sendFile);
 messageInput.addEventListener('keydown', handleKeyPress);
 emojiButton.addEventListener('click', toggleEmojiPicker);
 mediaButton.addEventListener('click', openFilePicker);  // Handle file picker click
+
+// Start the chat after user enters their name
+chatInterface.style.display = 'none';
+function startChat() {
+
+    const enteredUsername = usernameInput.value.trim();
+    if (enteredUsername) {
+        sessionStorage.setItem('username', enteredUsername);  
+        switchToChat(enteredUsername);
+    } else {
+        alert('Please enter a valid name.');
+    }
+}
 
 // Add event listener for pressing Enter key
 usernameInput.addEventListener('keydown', function(event) {
@@ -53,23 +75,19 @@ document.getElementById('startChatButton').addEventListener('click', function() 
     if (username) {
         // Update the chat title with the username
         document.querySelector('#chatInterface h1').textContent = username;
+
+        // Simulate connecting to the network
+        const peerId = Math.random().toString(36).substring(7); // Random ID for the user
+        addPeer(peerId, username); // Add the current user as a peer
+
+        // Simulate the continuous connection and disconnection of other peers
+        simulatePeerConnections(); // Add new peers every 10 seconds
+        simulatePeerDisconnections(); // Remove random peers every 15 seconds
+
     } else {
         alert('Please enter a valid name.');
     }
 });
-
-// Start the chat after user enters their name
-chatInterface.style.display = 'none';
-function startChat() {
-
-    const enteredUsername = usernameInput.value.trim();
-    if (enteredUsername) {
-        sessionStorage.setItem('username', enteredUsername);  
-        switchToChat(enteredUsername);
-    } else {
-        alert('Please enter a valid name.');
-    }
-}
 
 // Switch to the chat interface
 function switchToChat(username) {
@@ -91,6 +109,50 @@ function handleKeyPress(event) {
         sendMessage();
     }
 }
+
+    // Navigate to Connected Peers (Page 3)
+    goToPage3Button.addEventListener('click', function () {
+        chatInterface.style.display = 'none';
+        page3.style.display = 'block';
+        
+        // Populate the peer list on Page 3
+        populatePeerList();
+    });
+
+    // Navigate to Dedicated Groups (Page 4)
+    goToPage4Button.addEventListener('click', function () {
+        chatInterface.style.display = 'none';
+        page4.style.display = 'block';
+    });
+
+    // Back to Chat Page from Connected Peers (Page 3)
+    backToChatPageButton.addEventListener('click', function () {
+        page3.style.display = 'none';
+        chatInterface.style.display = 'block';
+    });
+
+    // Back to Chat Page from Dedicated Groups (Page 4)
+    backToChatPage2Button.addEventListener('click', function () {
+        page4.style.display = 'none';
+        chatInterface.style.display = 'block';
+    });
+
+    // // Create Group Button Logic (Page 3)
+    // document.getElementById('createGroup').addEventListener('click', function () {
+    //     const selectedPeers = [];
+    //     const peers = document.querySelectorAll('.peer-item input');
+    //     peers.forEach((peer, index) => {
+    //         if (peer.checked) {
+    //             selectedPeers.push(peer.nextSibling.textContent.trim());
+    //         }
+    //     });
+
+    //     if (selectedPeers.length > 0) {
+    //         alert('Group Created with: ' + selectedPeers.join(', '));
+    //     } else {
+    //         alert('Please select at least one peer.');
+    //     }
+    // });
 
 // Function to send a text message
 function sendMessage() {
@@ -283,3 +345,141 @@ socket.onerror = function(error) {
     console.error('WebSocket error:', error);
 };
 
+// Step 2: Handle connected peers and group creation
+
+// Event Listeners for the buttons
+document.getElementById('goToPage3').addEventListener('click', showPage3);
+document.getElementById('goToPage4').addEventListener('click', showPage4);
+document.getElementById('backToChatPage').addEventListener('click', backToChatPage);
+document.getElementById('backToChatPage2').addEventListener('click', backToChatPage);
+document.getElementById('createGroupButton').addEventListener('click', createGroupChat);
+
+
+// List to hold all the connected peers
+let peers = [];
+
+// Function to add a new peer to the network
+function addPeer(peerId, peerName) {
+    // Check if the peer already exists in the list to prevent duplicates
+    const existingPeer = peers.find(peer => peer.id === peerId);
+    if (!existingPeer) {
+        // Add the new peer to the list
+        peers.push({ id: peerId, name: peerName });
+        displayPeers(); // Re-render the list of peers
+    }
+}
+
+// Function to remove a peer when they disconnect
+function removePeer(peerId) {
+    // Find the index of the peer to be removed
+    const peerIndex = peers.findIndex(peer => peer.id === peerId);
+    
+    // If the peer exists, remove them
+    if (peerIndex !== -1) {
+        peers.splice(peerIndex, 1);
+        displayPeers();
+    }
+}
+
+// Function to populate the peer list dynamically
+function populatePeerList() {
+    const peerListContainer = document.getElementById('peer-list');
+    peerListContainer.innerHTML = ''; // Clear previous list
+
+    peers.forEach(peer => {
+        console.log("peer added in page 4");
+        const peerItem = document.createElement('div');
+        peerItem.classList.add('peer-item');
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `peer-${peer.id}`;
+        checkbox.addEventListener('change', handlePeerSelection);
+
+        const peerName = document.createElement('span');
+        peerName.setAttribute('for', checkbox.id);
+        peerName.textContent = peer.name;
+
+        peerItem.appendChild(checkbox);
+        peerItem.appendChild(peerName);
+        peerListContainer.appendChild(peerItem);
+    });
+}
+
+// Handle peer selection
+let selectedPeers = [];
+function handlePeerSelection(event) {
+    const peerId = event.target.id.split('-')[1];
+    
+    if (event.target.checked) {
+        selectedPeers.push(peerId);
+    } else {
+        selectedPeers = selectedPeers.filter(id => id !== peerId);
+    }
+
+    // Enable/disable the "Create Group Chat" button
+    const createGroupButton = document.getElementById('createGroupButton');
+    createGroupButton.disabled = selectedPeers.length === 0;
+}
+
+// Example function to simulate receiving new peers (this can be replaced with actual server events)
+function simulatePeerConnections() {
+    // Simulate new peer connections every 10 seconds for demonstration purposes
+    setInterval(() => {
+        const newPeerId = Math.random().toString(36).substring(7); // Generate a random peer ID
+        const newPeerName = `Peer-${newPeerId}`;
+        addPeer(newPeerId, newPeerName); // Add the new peer to the list
+    }, 10000); // Simulate adding new peers every 10 seconds
+}
+
+// Simulate a peer disconnecting
+function simulatePeerDisconnections() {
+    setInterval(() => {
+        if (peers.length > 0) {
+            const randomPeer = peers[Math.floor(Math.random() * peers.length)];
+            removePeer(randomPeer.id); // Remove a random peer for simulation
+        }
+    }, 15000); // Simulate removing a peer every 15 seconds
+}
+
+// Function for handling the group chat creation
+function createGroupChat() {
+    if (selectedPeers.length === 1) {
+        // 1-on-1 chat with the selected peer
+        const peerName = peers.find(peer => peer.id === Number(selectedPeers[0])).name;
+        alert(`Starting 1-on-1 chat with ${peerName}`);
+    } else if (selectedPeers.length > 1) {
+        // Group chat with multiple selected peers
+        const groupName = prompt('Enter a name for the group chat:');
+        if (groupName) {
+            alert(`Starting group chat: ${groupName} with ${selectedPeers.length} peers`);
+        }
+    }
+}
+
+// // Function to show Page 3 (Connected Peers)
+// function showPage3() {
+//     document.getElementById('page3').style.display = 'block';
+//     document.getElementById('chatInterface').style.display = 'none';
+//     document.getElementById('page4').style.display = 'none';
+
+//     // Populate the peer list on Page 3
+//     populatePeerList();
+// }
+
+// // Function to show Page 4 (Dedicated Groups)
+// function showPage4() {
+//     document.getElementById('page4').style.display = 'block';
+//     document.getElementById('chatInterface').style.display = 'none';
+//     document.getElementById('page3').style.display = 'none';
+// }
+
+// // Go back to the main chat page (Page 1)
+// function backToChatPage() {
+//     document.getElementById('chatInterface').style.display = 'block';
+//     document.getElementById('page3').style.display = 'none';
+//     document.getElementById('page4').style.display = 'none';
+// }
+
+// This function is a placeholder, call it after the login or other initial steps are completed
+// showConnectedPeersPage();

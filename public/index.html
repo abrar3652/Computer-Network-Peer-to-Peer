@@ -37,6 +37,57 @@
         <div>
             <button id="sendButton" disabled>Send</button>
         </div>
+
+        <div>
+            <button id="goToPage3">Go to Connected Peers</button>
+            <button id="goToPage4">Go to Dedicated Groups</button>
+        </div>
+
+    </div>
+
+
+
+    <!-- Page 3: Connected Peers -->
+    <div id="page3" class="container" style="display: none;">
+        <h1>Connected Peers</h1>
+        <div id="peer-list">
+
+            <div class="peer-item">
+                <input type="checkbox" id="peer1">
+                <label for="peer1">John Doe</label>
+            </div>
+            <div class="peer-item">
+                <input type="checkbox" id="peer2">
+                <label for="peer2">Jane Smith</label>
+            </div>
+            <div class="peer-item">
+                <input type="checkbox" id="peer3">
+                <label for="peer3">Sam Brown</label>
+            </div>
+
+        </div>
+
+        <button id="createGroupButton">Create Group Chat</button>
+        <button id="backToChatPage">Back to Chat</button>
+    </div>
+
+    <!-- Page 4: Dedicated Groups -->
+    <div id="page4" class="container" style="display: none;">
+        <h1>Your Dedicated Groups</h1>
+        <div class="group-list">
+
+            <div class="group-item">
+                <span>Team Chat</span>
+                <button onclick="alert('Opening Team Chat')">Open</button>
+            </div>
+            <div class="group-item">
+                <span>Project A</span>
+                <button onclick="alert('Opening Project A')">Open</button>
+            </div>
+            
+        </div>
+
+        <button id="backToChatPage2">Back to Chat</button>
     </div>
 
     <!-- Emoji Picker -->

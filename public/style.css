@@ -39,7 +39,6 @@ h1 {
     overflow-y: auto;
     max-height: 500px;
     height: 400px;
-    overflow-y: auto;
     margin-bottom: 10px;
     border: 1px solid #ccc;
     padding: 10px;
@@ -60,7 +59,6 @@ h1 {
 /* Input and File Upload Fields */
 .send-container {
     display: flex;
-    /* border: 10px solid black; */
     gap: 10px;
     justify-content: space-between;
 }
@@ -148,4 +146,97 @@ button:hover:enabled {
 }
 .emoji:hover {
     background-color: #f0f0f0;
+}
+
+
+/* Page 3: Connected Peers */
+#page3 {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.peer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.peer-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.peer-item input[type="checkbox"] {
+    margin-right: 10px;
+    width: 20px;
+    height: 20px;
+}
+
+#createGroupButton {
+    margin-top: 20px;
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#createGroupButton:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+#createGroupButton:hover:enabled {
+    background-color: #0056b3;
+}
+
+/* Page 4: Dedicated Groups */
+#page4 {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.group-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.group-item button {
+    padding: 5px 10px;
+    font-size: 14px;
+    background-color: #28a745;
+    border-radius: 5px;
+    color: white;
+}
+
+.group-item button:hover {
+    background-color: #218838;
+}
+
+/* Back Buttons */
+#backToChatPage, #backToChatPage2 {
+    margin-top: 20px;
+    background-color: #6c757d;
+    color: white;
+}
+
+#backToChatPage:hover, #backToChatPage2:hover {
+    background-color: #5a6268;
 }
