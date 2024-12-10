@@ -1,8 +1,10 @@
 // WebSocket connection
-const socket = new WebSocket('ws://localhost:3000');  // Connect to the WebSocket server
+// const socket = new WebSocket('ws://localhost:3000');  // Connect to the WebSocket server
+const socket = new WebSocket('ws://192.168.231.225:3000');  // Connect to the WebSocket server
 
 // Ensure the WebSocket is sending and receiving text
-socket.binaryType = 'text'; // We expect text data
+socket.binaryType = 'text'; // We expect text datacmd
+
 
 // DOM Elements
 const usernameForm = document.getElementById('usernameForm');
@@ -37,6 +39,16 @@ messageInput.addEventListener('keydown', handleKeyPress);
 emojiButton.addEventListener('click', toggleEmojiPicker);
 mediaButton.addEventListener('click', openFilePicker);  // Handle file picker click
 
+// List to hold all the connected peers
+let peers = [];
+
+let sharedKey;
+const passphrase = "your-secure-passphrase"; // Replace with a strong passphrase
+generateKey(passphrase).then((key) => {
+    sharedKey = key;
+});
+
+
 // Start the chat after user enters their name
 chatInterface.style.display = 'none';
 function startChat() {
@@ -60,10 +72,19 @@ usernameInput.addEventListener('keydown', function(event) {
         if (username) {
             // Update the chat title with the username
             document.querySelector('#chatInterface h1').textContent = username;
+            const peerInfo = {
+                type: 'join-peer', // Custom message type for new peer joining
+                peerName: username
+            };
+
+            socket.send(JSON.stringify(peerInfo)); // Send to server
+            console.log("peer name send to server");
+
         } else {
             alert('Please enter a valid name.');
         }
         // Trigger the start chat function
+
       startChat();
     }
   });
@@ -75,15 +96,7 @@ document.getElementById('startChatButton').addEventListener('click', function() 
     if (username) {
         // Update the chat title with the username
         document.querySelector('#chatInterface h1').textContent = username;
-
-        // Simulate connecting to the network
-        const peerId = Math.random().toString(36).substring(7); // Random ID for the user
-        addPeer(peerId, username); // Add the current user as a peer
-
-        // Simulate the continuous connection and disconnection of other peers
-        simulatePeerConnections(); // Add new peers every 10 seconds
-        simulatePeerDisconnections(); // Remove random peers every 15 seconds
-
+        console.log("stimulating peer1");
     } else {
         alert('Please enter a valid name.');
     }
@@ -114,9 +127,11 @@ function handleKeyPress(event) {
     goToPage3Button.addEventListener('click', function () {
         chatInterface.style.display = 'none';
         page3.style.display = 'block';
+
+        console.log("peers print");
         
         // Populate the peer list on Page 3
-        populatePeerList();
+       populatePeerList();
     });
 
     // Navigate to Dedicated Groups (Page 4)
@@ -154,20 +169,100 @@ function handleKeyPress(event) {
     //     }
     // });
 
+
+
+    //----------------------------------------------------------------------
+    //----------------------------------------------------------------------
+
+    // Generate a 256-bit key from a passphrase
+async function generateKey(passphrase) {
+    const encoder = new TextEncoder();
+    const keyMaterial = await window.crypto.subtle.importKey(
+        "raw",
+        encoder.encode(passphrase),
+        { name: "PBKDF2" },
+        false,
+        ["deriveKey"]
+    );
+
+    return window.crypto.subtle.deriveKey(
+        {
+            name: "PBKDF2",
+            salt: encoder.encode("some-random-salt"), // Add a fixed salt (can be random for more security)
+            iterations: 100000,
+            hash: "SHA-256"
+        },
+        keyMaterial,
+        { name: "AES-GCM", length: 256 },
+        true,
+        ["encrypt", "decrypt"]
+    );
+}
+
+// Encrypt a message
+async function encryptMessage(message, key) {
+    const encoder = new TextEncoder();
+    const encodedMessage = encoder.encode(message);
+
+    const iv = window.crypto.getRandomValues(new Uint8Array(12)); // Generate a random IV
+    const encrypted = await window.crypto.subtle.encrypt(
+        {
+            name: "AES-GCM",
+            iv: iv
+        },
+        key,
+        encodedMessage
+    );
+
+    // Return the IV and encrypted data concatenated as a base64 string
+    return {
+        iv: Array.from(iv), // Store IV separately for decryption
+        data: btoa(String.fromCharCode(...new Uint8Array(encrypted)))
+    };
+}
+
+// Decrypt a message
+async function decryptMessage(encryptedData, key) {
+    const { iv, data } = encryptedData;
+
+    const encryptedBytes = new Uint8Array(atob(data).split("").map(c => c.charCodeAt(0)));
+    const ivBytes = new Uint8Array(iv);
+
+    const decrypted = await window.crypto.subtle.decrypt(
+        {
+            name: "AES-GCM",
+            iv: ivBytes
+        },
+        key,
+        encryptedBytes
+    );
+
+    const decoder = new TextDecoder();
+    return decoder.decode(decrypted);
+}
+
+    //----------------------------------------------------------------------
+    //----------------------------------------------------------------------
+
 // Function to send a text message
-function sendMessage() {
+async function sendMessage() {
     const message = messageInput.value.trim();
     const username = sessionStorage.getItem('username');
 
     if (message && username) {
         // Send message via WebSocket
 
+        displayMessage('You: ' + message);
+
+        // const encryptedMessage = encryptMessage(message);
+        const encryptedMessage = await encryptMessage(message, sharedKey);
+
         socket.send(JSON.stringify({ 
             type: 'message', 
             content: message,
             username: username 
         }));
-        displayMessage('You: ' + message);
+
         messageInput.value = ''; // Clear the input after sending
     }
 }
@@ -281,15 +376,19 @@ socket.onopen = function() {
     console.log('WebSocket connection established.');
 };
 
-socket.onmessage = function(event) {
+socket.onmessage = async function(event) {
     try {
         const data = JSON.parse(event.data); // Parse the message as JSON
-
+        console.log("1. message get.");
         // for text handling
         if (data.type === 'message'&& data.content && data.username) {
-                displayMessage(data.username + ': ' + data.content); // Display the text message content correctly
-        } else if (data.type === 'file'&& data.fileContent) {
 
+            console.log("2. message get.");
+            // const decryptedMessage = await decryptMessage(data.content, sharedKey);
+
+            displayMessage(data.username + ': ' + data.content); // Display the text message content correctly
+        } else if (data.type === 'file'&& data.fileContent) {
+            
             // Handle file messages (images and documents)
             if (data.fileContent) {
                 const isImage = data.fileType.startsWith('image/');
@@ -304,7 +403,7 @@ socket.onmessage = function(event) {
                     imageElement.style.maxHeight = '200px';
                     displayMessage(data.username + ' shared an image: ' , imageElement);
                 }
-
+                
                 if (isDocument) {
 
                     // Create a document link
@@ -313,14 +412,14 @@ socket.onmessage = function(event) {
                     
                     // docLink.textContent = data.username +' shared a document: ' + data.fileName;
                     docLink.textContent =  data.fileName;
-
+                    
                     // Add event listener to handle both open and download
                     docLink.addEventListener('click', function(event) {
                         event.preventDefault();
                         
                         // Open the document in a new tab
                         window.open(data.fileContent, '_blank');
-
+                        
                         // Trigger the download
                         const downloadLink = document.createElement('a');
                         downloadLink.href = data.fileContent;
@@ -332,6 +431,18 @@ socket.onmessage = function(event) {
                 }
             }
         }
+        else if (data.type === 'new-peer') {
+            console.log("2. message get.");
+            const newPeerId = data.peerId;
+            const newPeerName = data.peerName; // Use the actual peer name
+            addPeer(newPeerId, newPeerName); // Add new peer to the list
+            console.log("peer arrived in main");
+        }
+        else if (data.type === 'peer-disconnected') {
+            const peerId = message.peerId;
+            removePeer(peerId); // Remove peer from the list
+        }
+        console.log("3. message get.");
     } catch (error) {
         console.error('Error parsing message:', error);
     }
@@ -355,8 +466,6 @@ document.getElementById('backToChatPage2').addEventListener('click', backToChatP
 document.getElementById('createGroupButton').addEventListener('click', createGroupChat);
 
 
-// List to hold all the connected peers
-let peers = [];
 
 // Function to add a new peer to the network
 function addPeer(peerId, peerName) {
@@ -365,7 +474,9 @@ function addPeer(peerId, peerName) {
     if (!existingPeer) {
         // Add the new peer to the list
         peers.push({ id: peerId, name: peerName });
-        displayPeers(); // Re-render the list of peers
+        populatePeerList(); // Re-render the list of peers
+        console.log("new peer is here");
+
     }
 }
 
@@ -377,7 +488,7 @@ function removePeer(peerId) {
     // If the peer exists, remove them
     if (peerIndex !== -1) {
         peers.splice(peerIndex, 1);
-        displayPeers();
+        populatePeerList();
     }
 }
 
@@ -422,25 +533,26 @@ function handlePeerSelection(event) {
     createGroupButton.disabled = selectedPeers.length === 0;
 }
 
-// Example function to simulate receiving new peers (this can be replaced with actual server events)
-function simulatePeerConnections() {
-    // Simulate new peer connections every 10 seconds for demonstration purposes
-    setInterval(() => {
-        const newPeerId = Math.random().toString(36).substring(7); // Generate a random peer ID
-        const newPeerName = `Peer-${newPeerId}`;
-        addPeer(newPeerId, newPeerName); // Add the new peer to the list
-    }, 10000); // Simulate adding new peers every 10 seconds
-}
+// // Example function to simulate receiving new peers (this can be replaced with actual server events)
+// function simulatePeerConnections() {
+//     // Simulate new peer connections every 10 seconds for demonstration purposes
+//     setInterval(() => {
+//         console.log("peer added");
+//         const newPeerId = Math.random().toString(36).substring(7); // Generate a random peer ID
+//         const newPeerName = `Peer-${newPeerId}`;
+//         addPeer(newPeerId, newPeerName); // Add the new peer to the list
+//     }, 10000); // Simulate adding new peers every 10 seconds
+// }
 
-// Simulate a peer disconnecting
-function simulatePeerDisconnections() {
-    setInterval(() => {
-        if (peers.length > 0) {
-            const randomPeer = peers[Math.floor(Math.random() * peers.length)];
-            removePeer(randomPeer.id); // Remove a random peer for simulation
-        }
-    }, 15000); // Simulate removing a peer every 15 seconds
-}
+// // Simulate a peer disconnecting
+// function simulatePeerDisconnections() {
+//     setInterval(() => {
+//         if (peers.length > 0) {
+//             const randomPeer = peers[Math.floor(Math.random() * peers.length)];
+//             removePeer(randomPeer.id); // Remove a random peer for simulation
+//         }
+//     }, 15000); // Simulate removing a peer every 15 seconds
+// }
 
 // Function for handling the group chat creation
 function createGroupChat() {
@@ -456,30 +568,3 @@ function createGroupChat() {
         }
     }
 }
-
-// // Function to show Page 3 (Connected Peers)
-// function showPage3() {
-//     document.getElementById('page3').style.display = 'block';
-//     document.getElementById('chatInterface').style.display = 'none';
-//     document.getElementById('page4').style.display = 'none';
-
-//     // Populate the peer list on Page 3
-//     populatePeerList();
-// }
-
-// // Function to show Page 4 (Dedicated Groups)
-// function showPage4() {
-//     document.getElementById('page4').style.display = 'block';
-//     document.getElementById('chatInterface').style.display = 'none';
-//     document.getElementById('page3').style.display = 'none';
-// }
-
-// // Go back to the main chat page (Page 1)
-// function backToChatPage() {
-//     document.getElementById('chatInterface').style.display = 'block';
-//     document.getElementById('page3').style.display = 'none';
-//     document.getElementById('page4').style.display = 'none';
-// }
-
-// This function is a placeholder, call it after the login or other initial steps are completed
-// showConnectedPeersPage();
